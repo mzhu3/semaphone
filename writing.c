@@ -18,14 +18,19 @@ int main(){
   int sem, shm;
   sem = semget(ftok("story.txt",256),1, IPC_CREAT| 0644);
   shm = shmget(24333, sizeof(char), IPC_CREAT | 0644);
-  struct sembuf semcomm;
-  semcomm->sem_num = 0;
-  semcomm->sem_op = -1;
-  semcomm->sem_flg = SEM_UNDO;
+  struct sembuf *semcomm = {0, -1, SEM_UNDO};
+  /*
+  semcomm.sem_num = 0;
+  semcomm.sem_op = -1;
+  semcomm.sem_flg = SEM_UNDO;
+  */
   semop(sem, semcomm, 1);
-  int fd = open("story.txt", O_RWONLY|O_APPEND, 0644);
+  int fd = open("story.txt", O_RDWR|O_APPEND, 0644);
   char line;
   line = shmat(shm, line, 0);
   printf("Previous line: \"%c\"\n", line);
   fgets(comm, sizeof(comm), stdin);
   write(fd, comm, 1024);
+  shmat(shm, comm, 0);
+  return 0;
+}
