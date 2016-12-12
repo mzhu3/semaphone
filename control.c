@@ -19,7 +19,7 @@ int main(int argc, char *argv[]){
   int sc,semid,meme,meid;
   if(strncmp(argv[1], "-c", strlen(argv[1]))==0){
     semid = semget(ftok("story.txt",256),1, IPC_CREAT| 0644);
-    meme = shmget(ftok("control.c",256),66, IPC_CREAT | IPC_EXCL | 0644);
+    meme = shmget(ftok("control.c",256),1000, IPC_CREAT | IPC_EXCL | 0644);
     int  f = open("story.txt", O_TRUNC | O_CREAT, 0644);
     union semun su;
     su.value = 1;
@@ -51,7 +51,7 @@ int main(int argc, char *argv[]){
     meid = shmctl(meme,IPC_RMID,0);
     printf("Shared mem remove:%d\n",meid);
     printf("semaphore and shared memory removed!%d\n", sc);
-    int f = open("story.txt",O_RDONLY,0644);
+    int f = open("story.txt",O_RDONLY);
     char buffer[100000];
     printf("reading File:\n");
     read(f,buffer,sizeof(buffer));
