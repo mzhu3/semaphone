@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <sys/shm.h>
 #include <unistd.h>
+#include <string.h>
 
 union semun{
   int value;
@@ -15,33 +16,47 @@ union semun{
 };
 
 int main(int argc, char *argv[]){
-  char command[256];
-  int sc;
-  int meme = shmget(24333, sizeof(char), IPC_CREAT | 0644);
+  int sc,semid,meme,meid;
   if(strncmp(argv[1], "-c", strlen(argv[1]))==0){
-    int semid = semget(ftok("story.txt",256),1, IPC_CREAT| 0644);
-    open("story.txt", O_TRUNC | O_CREAT, 0644);
-    printf("semaphore created, storytxt created\n");
+    semid = semget(ftok("story.txt",256),1, IPC_CREAT| 0644);
+    meme = shmget(ftok("control.c",256),66, IPC_CREAT | IPC_EXCL | 0644);
+    int  f = open("story.txt", O_TRUNC | O_CREAT, 0644);
     union semun su;
     su.value = 1;
     sc = semctl(semid,0,SETVAL,su);
+    if(semid == -1){
+      printf("Bro. We got it\n");
+      exit(0);
+    }
+    printf("Shared memory id: %d\n",meme);
+    printf("semaphore id: %d\n",semid);
+    printf("semaphore created, storytxt created, shared memory created \n");
+    close(f);
   }
   else if (strncmp(argv[1], "-v", strlen(argv[1])) == 0){
-    int  semid = semget(ftok("story.txt",256), 1, 0);
+    semid = semget(ftok("story.txt",256), 1, 0);
     sc = semctl(semid, 0, GETVAL);
-    printf("semaphore value: %d\n",sc);
-    char *s[100] = {"cat","story.txt"};
-    execvp(s[0],s);
-
+    int f = open("story.txt",O_RDONLY,0644);
+    char buffer[100000];
+    printf("reading File:\n");
+    read(f,buffer,sizeof(buffer));
+    printf("%s\n",buffer);
   }
   else if(strncmp(argv[1], "-r", strlen(argv[1])) == 0){
-    int semid = semget(ftok("story.txt",256), 1, 0);
+    struct shmid_ds buf;
+    semid = semget(ftok("story.txt",256), 1, 0);
     sc = semctl(semid, 0, IPC_RMID);
-    printf("semaphore removed: %d\n", sc);
-    char *s[100] = {"cat","story.txt"};
-    execvp(s[0],s);
+    meme = shmget(ftok("control.c",256),66,0);
+    sc = semctl(semid,0,IPC_RMID);
+    meid = shmctl(meme,IPC_RMID,0);
+    printf("Shared mem remove:%d\n",meid);
+    printf("semaphore and shared memory removed!%d\n", sc);
+    int f = open("story.txt",O_RDONLY,0644);
+    char buffer[100000];
+    printf("reading File:\n");
+    read(f,buffer,sizeof(buffer));
+    printf("%s\n",buffer);
   }
 
-  
   return 0;
 }
